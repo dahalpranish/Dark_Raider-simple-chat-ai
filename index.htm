@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dark Raider</title>
+<style>
+  :root {
+    --bg: #0a0a0d;
+    --glow-purple: #7c5cff;
+    --glow-blue: #4fd6ff;
+    --panel-bg: rgba(20, 19, 26, 0.75);
+    --field-bg: rgba(255, 255, 255, 0.05);
+    --field-border: rgba(255, 255, 255, 0.10);
+    --text-main: #f2f2f5;
+    --text-muted: #9a9aa5;
+    --error: #ff6b6b;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+    overflow: hidden;
+  }
+
+  .stage {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .glow {
+    position: absolute;
+    bottom: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140%;
+    height: 70%;
+    background:
+      radial-gradient(ellipse 30% 60% at 25% 100%, rgba(124, 92, 255, 0.55), transparent 60%),
+      radial-gradient(ellipse 30% 60% at 75% 100%, rgba(79, 214, 255, 0.45), transparent 60%),
+      radial-gradient(ellipse 40% 50% at 50% 100%, rgba(124, 92, 255, 0.35), transparent 65%);
+    filter: blur(10px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 3;
+    background: rgba(10, 10, 13, 0.55);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .header .logo {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* card */
+  .card {
+    position: relative;
+    z-index: 1;
+    width: min(400px, calc(100% - 32px));
+    background: var(--panel-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    padding: 44px 38px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .view {
+    display: none;
+    flex-direction: column;
+  }
+
+  .view.active {
+    display: flex;
+  }
+
+  h1.heading {
+    font-size: 1.9rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    text-align: center;
+  }
+
+  .subtext {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 0 28px 0;
+    text-align: center;
+  }
+
+  .field {
+    width: 100%;
+    height: 50px;
+    border: 1px solid var(--field-border);
+    border-radius: 12px;
+    background: var(--field-bg);
+    padding: 0 18px;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    outline: none;
+    margin-bottom: 16px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .field::placeholder { color: #6f7078; }
+
+  .field:focus {
+    border-color: var(--glow-purple);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18);
+  }
+
+  .field-message {
+    min-height: 18px;
+    font-size: 0.82rem;
+    color: var(--error);
+    margin: -6px 0 14px 2px;
+    line-height: 18px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--glow-purple), var(--glow-blue));
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+  }
+
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-primary:active { transform: scale(0.99); }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .btn-secondary {
+    width: 100%;
+    height: 50px;
+    border: 1px solid var(--field-border);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    margin-top: 14px;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--glow-purple);
+    background: rgba(124, 92, 255, 0.08);
+  }
+
+  .switch-link {
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .switch-link a {
+    color: var(--glow-blue);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .switch-link a:hover { text-decoration: underline; }
+
+  .back-link {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-bottom: 22px;
+    width: fit-content;
+  }
+
+  .back-link:hover { color: var(--text-main); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="glow"></div>
+
+  <div class="header">
+    <div class="logo">Dark Raider</div>
+  </div>
+
+  <div class="card">
+
+    <!-- ============ HOME VIEW ============ -->
+    <div class="view active" id="view-home">
+      <h1 class="heading">Hello Again!</h1>
+      <button class="btn-primary" id="goLogin">Login</button>
+      <button class="btn-secondary" id="goRegister">Register</button>
+    </div>
+
+    <!-- ============ LOGIN VIEW ============ -->
+    <div class="view" id="view-login">
+      <div class="back-link" data-goto="home">&larr; Back</div>
+      <h1 class="heading">Hello Again!</h1>
+      <p class="subtext">Sign in to keep chatting</p>
+      <form id="loginForm">
+        <input class="field" type="text" id="loginIdentifier" placeholder="Username or Email" autocomplete="username" required>
+        <input class="field" type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
+        <div class="field-message" id="loginMessage"></div>
+        <button class="btn-primary" type="submit" id="loginSubmit">Sign In</button>
+      </form>
+      <div class="switch-link">Don't have an account? <a data-goto="register">Register</a></div>
+    </div>
+
+    <!-- ============ REGISTER VIEW ============ -->
+    <div class="view" id="view-register">
+      <div class="back-link" data-goto="home">&larr; Back</div>
+      <h1 class="heading">Hello Again!</h1>
+      <p class="subtext">Create your account</p>
+      <form id="registerForm">
+        <input class="field" type="text" id="registerUsername" placeholder="Username" autocomplete="username" required>
+        <input class="field" type="email" id="registerEmail" placeholder="Email" autocomplete="email" required>
+        <input class="field" type="password" id="registerPassword" placeholder="Password" autocomplete="new-password" required>
+        <div class="field-message" id="registerMessage"></div>
+        <button class="btn-primary" type="submit" id="registerSubmit">Sign Up</button>
+      </form>
+      <div class="switch-link">Already have an account? <a data-goto="login">Login</a></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ---- Point these at your FastAPI/uvicorn endpoints ----
+  const LOGIN_ENDPOINT    = "http://127.0.0.1:8000/user/login";
+  const REGISTER_ENDPOINT = "http://127.0.0.1:8000/user/resister";
+  // Page to land on after a successful login.
+  const CHAT_PAGE = "chat.html";
+
+  const views = {
+    home: document.getElementById("view-home"),
+    login: document.getElementById("view-login"),
+    register: document.getElementById("view-register"),
+  };
+
+  function showView(name) {
+    Object.values(views).forEach(v => v.classList.remove("active"));
+    views[name].classList.add("active");
+    if (name !== "login") clearMessage("loginMessage");
+    if (name !== "register") clearMessage("registerMessage");
+  }
+
+  document.querySelectorAll("[data-goto]").forEach(el => {
+    el.addEventListener("click", () => showView(el.getAttribute("data-goto")));
+  });
+
+  document.getElementById("goLogin").addEventListener("click", () => showView("login"));
+  document.getElementById("goRegister").addEventListener("click", () => showView("register"));
+
+  function setMessage(id, text) {
+    document.getElementById(id).textContent = text || "";
+  }
+  function clearMessage(id) {
+    document.getElementById(id).textContent = "";
+  }
+
+  // ---------------- LOGIN ----------------
+  const loginForm = document.getElementById("loginForm");
+  const loginSubmit = document.getElementById("loginSubmit");
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearMessage("loginMessage");
+
+    const identifier = document.getElementById("loginIdentifier").value.trim();
+    const password = document.getElementById("loginPassword").value;
+
+    loginSubmit.disabled = true;
+    loginSubmit.textContent = "Signing In...";
+
+    try {
+      const res = await fetch(LOGIN_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, password })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        sessionStorage.setItem("access_token", data.access_token);
+        window.location.href = `${CHAT_PAGE}?username=${encodeURIComponent(identifier)}`;
+      } else {
+        setMessage("loginMessage", "Incorrect username or password");
+      }
+    } catch (err) {
+      setMessage("loginMessage", "Incorrect username or password");
+    } finally {
+      loginSubmit.disabled = false;
+      loginSubmit.textContent = "Sign In";
+    }
+  });
+
+  // ---------------- REGISTER ----------------
+  const registerForm = document.getElementById("registerForm");
+  const registerSubmit = document.getElementById("registerSubmit");
+
+  registerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearMessage("registerMessage");
+
+    const username = document.getElementById("registerUsername").value.trim();
+    const email = document.getElementById("registerEmail").value.trim();
+    const password = document.getElementById("registerPassword").value;
+
+    registerSubmit.disabled = true;
+    registerSubmit.textContent = "Signing Up...";
+
+    try {
+      const res = await fetch(REGISTER_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password })
+      });
+
+      if (res.ok) {
+        registerForm.reset();
+        showView("home");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        const backendDetail = (data.detail || "").toLowerCase();
+
+        if (backendDetail.includes("email")) {
+          setMessage("registerMessage", "Email already exists");
+        } else if (backendDetail.includes("username")) {
+          setMessage("registerMessage", "Username already exists");
+        } else {
+          setMessage("registerMessage", "Something went wrong");
+        }
+      }
+    } catch (err) {
+      setMessage("registerMessage", "Something went wrong");
+    } finally {
+      registerSubmit.disabled = false;
+      registerSubmit.textContent = "Sign Up";
+    }
+  });
+</script>
+
+</body>
+</html>
